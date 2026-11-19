@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Netlogic Systems — Technician Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
+    input, select, textarea { color-scheme: dark; }
+    .field {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.65rem;
+      padding: 0.6rem 0.75rem;
+      color: #f1f5f9;
+      font-size: 0.875rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .field:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+    .progress-bar { transition: width 0.35s ease; }
+  </style>
+</head>
+<body class="min-h-full bg-slate-900 text-slate-100 flex flex-col">
+
+  <!-- TOP NAVIGATION BAR (TECHNICIAN PORTAL PAGE) -->
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 grid place-items-center shadow-lg shadow-emerald-950 shrink-0">
+          <i class="fa-solid fa-hard-hat text-white"></i>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-white">Netlogic Systems — Technician Portal</h1>
+            <span id="simDateBadge" class="text-xs font-mono bg-blue-950 text-blue-300 border border-blue-700/60 px-2.5 py-0.5 rounded-full">
+              <i class="fa-regular fa-calendar mr-1"></i><span id="simDateText">2026-11-19</span>
+            </span>
+            <span id="liveSyncIndicator" class="text-[11px] bg-slate-800 text-slate-300 border border-slate-600 px-2 py-0.5 rounded-full">Connecting...</span>
+          </div>
+          <p class="text-xs text-slate-400">Aligned Site Details • Morning Tasks • Pending Reasons • EOD Rollover (Syncs to Main Page)</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+
+        <div id="techSessionNavGroup" class="hidden flex items-center gap-2">
+          <span id="headerTechChip" class="text-xs font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/70 px-3 py-1.5 rounded-lg"></span>
+          <button type="button" onclick="logoutTechnician()" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition shadow">
+            <i class="fa-solid fa-right-from-bracket mr-1"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto w-full flex-1 p-4 sm:p-6 space-y-6">
+
+    <!-- TECHNICIAN LOGIN VIEW -->
+    <section id="loginView" class="py-6 sm:py-12">
+      <div class="max-w-md mx-auto bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+        <div class="text-center space-y-2">
+          <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-blue-400 grid place-items-center mx-auto text-2xl">
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <h2 class="text-xl font-bold text-white">Technician Portal Login</h2>
+          <p class="text-xs text-slate-400">Enter the username and PIN given by your admin. All updates sync directly to the Main Report Page.</p>
+        </div>
+
+        <form onsubmit="handleTechnicianLogin(event)" class="space-y-4">
+          <label class="block text-xs text-slate-300">
+            Technician Username *
+            <input id="loginUsername" required class="field mt-1" placeholder="e.g. tech_vinay" />
+          </label>
+          <label class="block text-xs text-slate-300">
+            Password / PIN *
+            <input id="loginPin" type="password" required class="field mt-1" placeholder="Enter your password or PIN" />
+          </label>
+          <p id="loginErrorMsg" class="hidden text-xs text-red-400 bg-red-950/50 border border-red-800/60 rounded-lg p-2.5"></p>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm cursor-pointer transition shadow-lg shadow-blue-950">
+            <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i>Login to Technician Portal
+          </button>
+        </form>
+
+        <!-- QUICK FILL SAMPLE TECHNICIANS -->
+        <div class="border-t border-slate-700/80 pt-4 space-y-2">
+          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Quick Fill Sample Technicians (PIN: 1234)</p>
+          <div id="quickFillButtons" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TECHNICIAN WORKSPACE VIEW -->
+    <section id="techWorkspaceView" class="hidden space-y-5">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 grid place-items-center text-xl shrink-0">
+            <i class="fa-solid fa-hard-hat"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 id="wsTechFullName" class="text-lg sm:text-xl font-bold text-white">Vinay</h2>
+              <span id="wsTechUsernameBadge" class="text-xs font-mono bg-slate-900 text-cyan-300 border border-slate-700 px-2.5 py-0.5 rounded-full">@tech_vinay</span>
+              <span class="text-[11px] bg-blue-950 text-blue-300 border border-blue-700/60 px-2.5 py-0.5 rounded-full">
+                <i class="fa-solid fa-tower-broadcast mr-1"></i>Updates Sync to Main Page
+              </span>
+            </div>
+            <p id="wsAlignedSubtitle" class="text-xs text-slate-400 mt-0.5">Aligned Site: —</p>
+          </div>
+        </div>
+
+        <button type="button" onclick="logoutTechnician()" class="bg-red-950/60 hover:bg-red-900/70 text-red-300 border border-red-800/60 px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i>Logout
+        </button>
+      </div>
+
+      <!-- SUB-TABS: PROJECT TAB vs DAILY TASKS & EOD TAB -->
+      <div class="flex flex-wrap gap-2 bg-slate-800/70 p-2 rounded-2xl border border-slate-700/80">
+        <button type="button" id="subtabProject" onclick="setTechSubtab('project')" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2 shadow">
+          <i class="fa-solid fa-building"></i> Project (Aligned Site)
+        </button>
+        <button type="button" id="subtabTasks" onclick="setTechSubtab('tasks')" class="bg-slate-900 text-slate-300 hover:text-white border border-slate-700 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2">
+          <i class="fa-solid fa-list-check"></i> Daily Tasks & EOD
+          <span id="wsPendingCountPill" class="bg-amber-950 text-amber-300 border border-amber-700/60 px-2 py-0.5 rounded-full text-[11px]">0 Pending</span>
+        </button>
+      </div>
+
+      <!-- SUB-TAB A: ALIGNED PROJECT DETAILS -->
+      <div id="techProjectPanel" class="space-y-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 sm:p-6 space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-700 pb-4">
+            <div>
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-blue-400 bg-blue-950/80 border border-blue-800/60 px-2.5 py-1 rounded-full">
+                Aligned From Main Report Page
+              </span>
+              <h3 id="projTabTitle" class="text-xl sm:text-2xl font-bold text-white mt-2">—</h3>
+              <p id="projTabLocation" class="text-sm text-slate-400 mt-0.5"><i class="fa-solid fa-location-dot mr-1.5 text-rose-400"></i>—</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-right">
+              <p class="text-[11px] text-slate-400">Project Manager (PM)</p>
+              <p id="projTabPm" class="text-sm font-bold text-cyan-300 mt-0.5">—</p>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="bg-slate-900/80 border border-slate-700/70 rounded-xl p-4 space-y-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-blue-300">Site Scope & Instructions</h4>
+              <p id="projTabScope" class="text-sm text-slate-200 leading-relaxed">—</p>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-700/70 rounded-xl p-4 space-y-3">
+              <div class="flex justify-between items-center">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-300">Overall Site Progress</h4>
+                <span id="projTabProgressText" class="text-sm font-bold text-emerald-400">0%</span>
+              </div>
+              <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div id="projTabProgressBar" class="h-full bg-emerald-500 progress-bar" style="width: 0%"></div>
+              </div>
+              <form onsubmit="handleTechProgressUpdate(event)" class="flex items-center gap-2 pt-1">
+                <input id="projTabProgressInput" type="number" min="0" max="100" class="field !py-1.5 text-xs" placeholder="0 - 100" />
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer shrink-0 transition">
+                  Update %
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-purple-300">Tasks Under This Aligned Site</h4>
+              <button type="button" onclick="setTechSubtab('tasks')" class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer">
+                Go to Daily Tasks & EOD <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+            <div id="projTabTasksSummary" class="text-xs text-slate-300 space-y-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB B: DAILY TASKS & EOD ROLLOVER -->
+      <div id="techTasksPanel" class="hidden space-y-5">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sun text-amber-400"></i>
+              Morning Task Entry — <span id="morningTaskDate" class="font-mono text-sm text-blue-300"></span>
+            </h3>
+            <p class="text-xs text-slate-400">Add today's tasks for your aligned site (<b id="morningAlignedProjectLabel" class="text-slate-200">—</b>).</p>
+          </div>
+
+          <form onsubmit="handleAddDailyTask(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <label class="text-xs text-slate-300 sm:col-span-5">
+              Task Title / Work Item *
+              <input id="newTaskTitle" required class="field mt-1" placeholder="e.g. Terminate 24-port patch panel in Server Rack" />
+            </label>
+            <label class="text-xs text-slate-300 sm:col-span-4">
+              Category / Cable / Device Note
+              <input id="newTaskNote" class="field mt-1" placeholder="e.g. Cat6 Rack-01, Fluke test pending" />
+            </label>
+            <div class="sm:col-span-3">
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs cursor-pointer transition shadow">
+                <i class="fa-solid fa-plus mr-1"></i>Add Daily Task
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-slate-800/90 border border-amber-700/60 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Carried-Over Pending Tasks (Previous Days)
+              </h3>
+              <p class="text-xs text-slate-400">Incomplete tasks moved from earlier days. Check off if completed today or update the pending reason.</p>
+            </div>
+            <span id="carryOverBadge" class="text-xs font-semibold bg-amber-950 text-amber-300 border border-amber-700/60 px-2.5 py-1 rounded-full">0 Carry-Over</span>
+          </div>
+          <div id="carryOverList" class="space-y-2.5"></div>
+        </div>
+
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 pb-3">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-moon text-indigo-400"></i>
+                Today's Tasks & End-of-Day (EOD) Checklist
+              </h3>
+              <p class="text-xs text-slate-400">Tick completed tasks. Every unchecked task <b>requires a Pending Reason / Remark</b> before running EOD so it rolls over cleanly to the next day.</p>
+            </div>
+            <button type="button" onclick="runEodRollover()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs cursor-pointer transition shadow-lg shadow-emerald-950 flex items-center gap-2">
+              <i class="fa-solid fa-moon-over-sun"></i>
+              Run EOD & Move Pending to Next Day
+            </button>
+          </div>
+          <p id="eodValidationMsg" class="hidden text-xs text-red-300 bg-red-950/60 border border-red-700/70 rounded-xl p-3"></p>
+
+          <div id="todayTasksList" class="space-y-3"></div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-slate-800 border border-emerald-800/50 rounded-2xl p-4 sm:p-5 space-y-3">
+            <h4 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check"></i> Completed Tasks (<span id="completedDayLabel"></span>)
+            </h4>
+            <div id="completedTodayList" class="space-y-2 text-xs"></div>
+          </div>
+
+          <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-3">
+            <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+              <i class="fa-solid fa-book-open"></i> EOD Summary History
+            </h4>
+            <div id="eodHistoryList" class="space-y-2 text-xs max-h-64 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastBox" class="hidden fixed bottom-4 right-4 z-50 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl text-xs sm:text-sm font-medium flex items-center gap-2"></div>
+
+  <script>
+    const STORAGE_KEY = 'netlogic_tech_eod_portal_v1';
+    const SESSION_TECH_KEY = 'netlogic_active_tech_session_v1';
+    const SHARED_PROJECTS_KEY = 'infratrack_dispatch_projects_v2';
+    const CLOUD_URL_KEY = 'netlogic_firebase_rtdb_url_v1';
+
+    function parseIsoDate(isoStr) {
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    function formatIsoDate(dateObj) {
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDaysIso(isoStr, deltaDays) {
+      const dt = parseIsoDate(isoStr);
+      dt.setUTCDate(dt.getUTCDate() + deltaDays);
+      return formatIsoDate(dt);
+    }
+
+    function createDefaultState() {
+      const today = todayIso();
+      const yesterday = addDaysIso(today, -1);
+      return {
+        currentDate: today,
+        lastUpdatedAt: new Date().toISOString(),
+        technicians: [
+          {
+            username: 'tech_vinay',
+            name: 'Vinay',
+            pin: '1234',
+            project: {
+              projectName: 'HDFC Branch Core Network & Wi-Fi',
+              location: 'Andheri West, Mumbai',
+              pm: 'Vivek',
+              scope: 'Install 24-port core switch, lay 18 Cat6 drops, mount 3 ceiling APs, and label patch panel.',
+              progress: 65
+            },
+            carryOverTasks: [
+              {
+                id: 'tsk-101',
+                title: 'Fluke test Nodes 13 to 18 on Floor 1',
+                note: 'Cat6 / Floor-1 Zone B',
+                originDate: yesterday,
+                pendingReason: 'Client meeting in server room blocked rack access before 5:30 PM.'
+              }
+            ],
+            todayTasks: [
+              {
+                id: 'tsk-102',
+                title: 'Mount 3 Wi-Fi 6 Access Points on ceiling',
+                note: 'AP-01, AP-02, AP-03',
+                completed: true,
+                pendingReason: ''
+              },
+              {
+                id: 'tsk-103',
+                title: 'Dress & label 24-port patch panel in MDF rack',
+                note: 'MDF Rack / Labeling',
+                completed: false,
+                pendingReason: ''
+              }
+            ],
+            completedTasks: [
+              {
+                id: 'tsk-100',
+                title: 'Pull 18 Cat6 cables from MDF to workstation zone',
+                note: 'Cat6 Cabling',
+                completedDate: yesterday
+              }
+            ],
+            eodHistory: [
+              {
+                date: yesterday,
+                completedCount: 1,
+                pendingCount: 1,
+                note: '1 task completed; 1 Fluke test task carried over due to server room access.'
+              }
+            ]
+          },
+          {
+            username: 'tech_satyawan',
+            name: 'Satyawan',
+            pin: '1234',
+            project: {
+              projectName: 'Reliance Warehouse IP CCTV Expansion',
+              location: 'Bhiwandi Logistics Park',
+              pm: 'Vivek',
+              scope: 'Mount 8 bullet cameras along perimeter poles, pull armored cable, and configure NVR channels.',
+              progress: 45
+            },
+            carryOverTasks: [],
+            todayTasks: [
+              {
+                id: 'tsk-201',
+                title: 'Install Poles P-01 to P-04 & weatherproof junction boxes',
+                note: 'Perimeter / Armored Cable',
+                completed: false,
+                pendingReason: ''
+              },
+              {
+                id: 'tsk-202',
+                title: 'Configure 16-ch NVR storage & static IP scheme',
+                note: 'Control Room / NVR',
+                completed: false,
+                pendingReason: ''
+              }
+            ],
+            completedTasks: [],
+            eodHistory: []
+          },
+          {
+            username: 'tech_shyamji',
+            name: 'Shyamji',
+            pin: '1234',
+            project: {
+              projectName: 'Tata Office Structured Cabling & Rack Upgrade',
+              location: 'Vashi, Navi Mumbai',
+              pm: 'Priya',
+              scope: 'Replace old 42U rack, reroute fiber patch cords, and verify switch stack uplink.',
+              progress: 80
+            },
+            carryOverTasks: [
+              {
+                id: 'tsk-301',
+                title: 'Verify LC-LC fiber uplink redundancy between IDF-1 & IDF-2',
+                note: 'Single-Mode Fiber',
+                originDate: yesterday,
+                pendingReason: 'Waiting for building maintenance shutdown window.'
+              }
+            ],
+            todayTasks: [
+              {
+                id: 'tsk-302',
+                title: 'Complete IDF-1 to IDF-2 fiber redundancy test',
+                note: 'Fiber Optic / OTDR',
+                completed: false,
+                pendingReason: ''
+              }
+            ],
+            completedTasks: [],
+            eodHistory: []
+          }
+        ]
+      };
+    }
+
+    let state = null;
+    let activeTechUsername = sessionStorage.getItem(SESSION_TECH_KEY) || null;
+
+    // ================= ONLINE (FIREBASE) SYNC — SHARED CODE =================
+    // STEP: apni Firebase Realtime Database URL yahan paste karein (dono files me same).
+    const FIREBASE_URL = 'https://netlogic-tracker-default-rtdb.asia-southeast1.firebasedatabase.app/';   // e.g. https://netlogic-xxxx-default-rtdb.firebaseio.com
+    const DB_ROOT = 'netlogic_portal_v2';
+    const POLL_MS = 8000;
+
+    function todayIso() { return new Date(Date.now() + 19800000).toISOString().slice(0, 10); } // India (IST) date
+    function techDate(t) { return (t && t.currentDate) || (state && state.currentDate) || todayIso(); }
+
+    function getCloudUrl() {
+      const c = (FIREBASE_URL || '').trim();
+      if (c && !c.includes('PASTE_YOUR')) return c.replace(/\/+$/, '');
+      return (localStorage.getItem(CLOUD_URL_KEY) || '').trim().replace(/\/+$/, '');
+    }
+
+    let cloudBusy = 0;
+    let pendingPush = false;
+    let lastRemoteRaw = '';
+
+    function setSyncBadge(ok) {
+      const el = document.getElementById('liveSyncIndicator');
+      if (!el) return;
+      const base = 'text-[11px] px-2 py-0.5 rounded-full border ';
+      if (!getCloudUrl()) {
+        el.className = base + 'bg-amber-950 text-amber-300 border-amber-700/60';
+        el.innerHTML = '<i class="fa-solid fa-hard-drive mr-1"></i>Local only (not online)';
+      } else if (ok) {
+        const t = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        el.className = base + 'bg-emerald-950 text-emerald-300 border-emerald-700/60';
+        el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i>Online • synced ' + t;
+      } else {
+        el.className = base + 'bg-red-950 text-red-300 border-red-700/60';
+        el.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>Offline — retrying';
+      }
+    }
+
+    // One generic request helper. Returns {ok, data}
+    async function cloudReq(method, path, body) {
+      const base = getCloudUrl();
+      if (!base) return { ok: false, off: true };
+      const url = `${base}/${DB_ROOT}${path ? '/' + path : ''}.json` + (method === 'GET' ? '?t=' + Date.now() : '');
+      cloudBusy++;
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: method === 'GET' ? undefined : { 'Content-Type': 'application/json' },
+          body: body === undefined ? undefined : JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        setSyncBadge(true);
+        return { ok: true, data };
+      } catch (err) {
+        console.warn('Cloud error:', method, path, err);
+        setSyncBadge(false);
+        return { ok: false };
+      } finally {
+        cloudBusy--;
+      }
+    }
+
+    // Firebase drops empty arrays, so rebuild them after every download
+    function normalizeTech(t, fallbackDate) {
+      t.project = t.project || {};
+      ['carryOverTasks', 'todayTasks', 'completedTasks', 'eodHistory'].forEach(k => {
+        if (!t[k]) t[k] = [];
+        else if (!Array.isArray(t[k])) t[k] = Object.values(t[k]);
+      });
+      t.currentDate = t.currentDate || fallbackDate || todayIso();
+      return t;
+    }
+    function remoteToState(remote) {
+      const rt = remote.technicians || {};
+      const fallback = remote.currentDate || todayIso();
+      return {
+        currentDate: fallback,
+        lastUpdatedAt: remote.lastUpdatedAt || new Date().toISOString(),
+        technicians: Object.keys(rt).map(k => normalizeTech(rt[k], fallback))
+      };
+    }
+    function stateToRemote(s) {
+      const techs = {};
+      s.technicians.forEach(t => { techs[t.username] = t; });
+      return { currentDate: s.currentDate, lastUpdatedAt: s.lastUpdatedAt, technicians: techs };
+    }
+
+    function isTyping() {
+      const a = document.activeElement;
+      if (!a || !['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)) return false;
+      return !a.closest('#loginView, #adminGate') && a.id !== 'mainSearch';
+    }
+
+    async function pullFromCloud(silent = true) {
+      if (!getCloudUrl() || cloudBusy > 0 || pendingPush) return;
+      const r = await cloudReq('GET', '');
+      if (!r.ok || cloudBusy > 0 || pendingPush) return;
+      if (r.data === null) { await onCloudEmpty(); return; }
+      const raw = JSON.stringify(r.data);
+      if (raw === lastRemoteRaw) return;
+      if (isTyping()) return;                       // don't disturb someone who is typing; retry next cycle
+      lastRemoteRaw = raw;
+      state = remoteToState(r.data);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+      syncAlignedProjectsToSharedStore();
+      onStateFromCloud(silent);
+    }
+
+    function startCloudPolling() {
+      if (!getCloudUrl()) { setSyncBadge(false); return; }
+      pullFromCloud(true);
+      setInterval(() => { if (!document.hidden) pullFromCloud(true); }, POLL_MS);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) pullFromCloud(true); });
+    }
+
+    // ---- Technician specific cloud actions ----
+    function onCloudEmpty() { /* admin has not created data yet */ }
+    function onStateFromCloud(silent) { renderWorkspace(); }
+
+    // Technician only writes HIS OWN task data (never other technicians, never his PIN)
+    let pushTimer = null;
+    function schedulePush(delay = 500) {
+      if (!getCloudUrl()) return;
+      pendingPush = true;
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(async () => {
+        const ok = await pushMyData();
+        if (ok) pendingPush = false; else schedulePush(5000);   // retry if offline
+      }, delay);
+    }
+    async function pushMyData() {
+      const t = getActiveTech();
+      if (!t) return true;
+      const r = await cloudReq('PATCH', `technicians/${t.username}`, {
+        todayTasks: t.todayTasks || [],
+        carryOverTasks: t.carryOverTasks || [],
+        completedTasks: t.completedTasks || [],
+        eodHistory: t.eodHistory || [],
+        currentDate: techDate(t)
+      });
+      return r.ok;
+    }
+    window.addEventListener('beforeunload', e => { if (pendingPush) { e.preventDefault(); e.returnValue = ''; } });
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.technicians) && parsed.currentDate) {
+            parsed.technicians.forEach(t => normalizeTech(t, parsed.currentDate));
+            state = parsed;
+            return;
+          }
+        }
+      } catch (err) { console.warn('State parse fallback:', err); }
+      if (getCloudUrl()) {
+        state = { currentDate: todayIso(), lastUpdatedAt: new Date().toISOString(), technicians: [] };
+      } else {
+        state = createDefaultState();
+        state.technicians.forEach(t => { t.currentDate = state.currentDate; });
+        saveState(false);
+      }
+    }
+
+    function saveState(notifyMain = true) {
+      state.lastUpdatedAt = new Date().toISOString();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        syncAlignedProjectsToSharedStore();
+        schedulePush();
+        if (notifyMain) showToast(getCloudUrl() ? 'Saved — syncing to Main Page' : 'Saved on this device only');
+      } catch (err) {
+        showToast('Could not save state to browser storage.', 'error');
+      }
+    }
+
+    function syncAlignedProjectsToSharedStore() {
+      try {
+        const existing = JSON.parse(localStorage.getItem(SHARED_PROJECTS_KEY) || '[]');
+        const list = Array.isArray(existing) ? existing : [];
+        state.technicians.forEach(tech => {
+          const prjId = 'ALIGN-' + tech.username.toUpperCase();
+          const idx = list.findIndex(item => item.id === prjId);
+          const record = {
+            id: prjId,
+            name: tech.project.projectName,
+            location: tech.project.location,
+            pm: tech.project.pm,
+            technicianUser: tech.username,
+            technicianPass: tech.pin,
+            progress: Number(tech.project.progress) || 0,
+            remark: tech.project.scope,
+            dispatchStatus: 'Delivered',
+            updatedAt: state.currentDate
+          };
+          if (idx !== -1) list[idx] = { ...list[idx], ...record };
+          else list.unshift(record);
+        });
+        localStorage.setItem(SHARED_PROJECTS_KEY, JSON.stringify(list));
+      } catch (_) {}
+    }
+
+    function esc(str = '') {
+      return String(str).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function showToast(message, type = 'success') {
+      const box = document.getElementById('toastBox');
+      box.className = `fixed bottom-4 right-4 z-50 px-4 py-3 rounded-xl shadow-2xl text-xs sm:text-sm font-medium flex items-center gap-2 ${
+        type === 'error' ? 'bg-red-600 text-white' : type === 'warn' ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
+      }`;
+      box.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : type === 'warn' ? 'fa-circle-info' : 'fa-circle-check'}"></i><span>${esc(message)}</span>`;
+      box.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2800);
+    }
+
+    function getActiveTech() {
+      return state.technicians.find(t => t.username === activeTechUsername) || null;
+    }
+
+    function applySessionView() {
+      const tech = getActiveTech();
+      const loggedIn = Boolean(tech);
+      document.getElementById('loginView').classList.toggle('hidden', loggedIn);
+      document.getElementById('techWorkspaceView').classList.toggle('hidden', !loggedIn);
+      document.getElementById('techSessionNavGroup').classList.toggle('hidden', !loggedIn);
+      if (loggedIn) {
+        document.getElementById('headerTechChip').textContent = `${tech.name} (@${tech.username})`;
+      }
+    }
+
+    async function handleTechnicianLogin(e) {
+      e.preventDefault();
+      if (getCloudUrl()) await pullFromCloud(true);
+      const user = document.getElementById('loginUsername').value.trim().toLowerCase();
+      const pin = document.getElementById('loginPin').value.trim();
+      const errEl = document.getElementById('loginErrorMsg');
+
+      const found = state.technicians.find(t => t.username.toLowerCase() === user && String(t.pin) === pin);
+      if (!found) {
+        errEl.textContent = 'Invalid Technician Username or Password/PIN.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      errEl.classList.add('hidden');
+      activeTechUsername = found.username;
+      sessionStorage.setItem(SESSION_TECH_KEY, activeTechUsername);
+      applySessionView();
+      setTechSubtab('project');
+      renderWorkspace();
+      showToast(`Welcome, ${found.name}!`);
+    }
+
+    function logoutTechnician() {
+      activeTechUsername = null;
+      sessionStorage.removeItem(SESSION_TECH_KEY);
+      applySessionView();
+      renderQuickFillButtons();
+      showToast('Logged out from Technician Portal.', 'warn');
+    }
+
+    function renderQuickFillButtons() {
+      const wrap = document.getElementById('quickFillButtons');
+      if (getCloudUrl()) { wrap.parentElement.classList.add('hidden'); return; }   // online: never show other technicians' logins
+      wrap.innerHTML = state.technicians.map(t => `
+        <button type="button" onclick="quickFillTech('${esc(t.username)}')" class="bg-slate-900 hover:bg-slate-700 text-cyan-300 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition">
+          ${esc(t.name)} (${esc(t.username)})
+        </button>
+      `).join('');
+    }
+
+    function quickFillTech(username) {
+      const found = state.technicians.find(t => t.username === username);
+      document.getElementById('loginUsername').value = username;
+      document.getElementById('loginPin').value = (!getCloudUrl() && found) ? found.pin : '';
+      document.getElementById('loginErrorMsg').classList.add('hidden');
+    }
+
+    function setTechSubtab(subtab) {
+      const isProject = subtab === 'project';
+      document.getElementById('techProjectPanel').classList.toggle('hidden', !isProject);
+      document.getElementById('techTasksPanel').classList.toggle('hidden', isProject);
+
+      document.getElementById('subtabProject').className = isProject
+        ? 'bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2 shadow'
+        : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-700 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2';
+
+      document.getElementById('subtabTasks').className = !isProject
+        ? 'bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2 shadow'
+        : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-700 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition flex items-center gap-2';
+    }
+
+    function renderWorkspace() {
+      { const _t = getActiveTech(); document.getElementById('simDateText').textContent = _t ? techDate(_t) : todayIso(); }
+      renderQuickFillButtons();
+      applySessionView();
+
+      const tech = getActiveTech();
+      if (!tech) return;
+
+      document.getElementById('wsTechFullName').textContent = tech.name;
+      document.getElementById('wsTechUsernameBadge').textContent = '@' + tech.username;
+      document.getElementById('wsAlignedSubtitle').textContent =
+        `Aligned Site: ${tech.project.projectName} (${tech.project.location}) • PM: ${tech.project.pm}`;
+
+      const pendingTotal = (tech.carryOverTasks || []).length + (tech.todayTasks || []).filter(x => !x.completed).length;
+      document.getElementById('wsPendingCountPill').textContent = `${pendingTotal} Pending`;
+
+      const prog = Number(tech.project.progress) || 0;
+      document.getElementById('projTabTitle').textContent = tech.project.projectName || 'Aligned Site Project';
+      document.getElementById('projTabLocation').innerHTML = `<i class="fa-solid fa-location-dot mr-1.5 text-rose-400"></i>${esc(tech.project.location || '—')}`;
+      document.getElementById('projTabPm').textContent = tech.project.pm || '—';
+      document.getElementById('projTabScope').textContent = tech.project.scope || 'No scope notes provided.';
+      document.getElementById('projTabProgressText').textContent = `${prog}%`;
+      document.getElementById('projTabProgressBar').style.width = `${prog}%`;
+      document.getElementById('projTabProgressInput').value = prog;
+
+      const allProjectTasks = [
+        ...(tech.carryOverTasks || []).map(x => ({ ...x, statusLabel: `Carry-Over (${x.originDate})`, cls: 'text-amber-300' })),
+        ...(tech.todayTasks || []).map(x => ({ ...x, statusLabel: x.completed ? 'Completed Today' : 'Today Open', cls: x.completed ? 'text-emerald-300' : 'text-blue-300' }))
+      ];
+      document.getElementById('projTabTasksSummary').innerHTML = allProjectTasks.length
+        ? allProjectTasks.map(x => `
+            <div class="flex items-center justify-between bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2">
+              <span>${esc(x.title)}</span>
+              <span class="text-[11px] font-semibold ${x.cls}">${esc(x.statusLabel)}</span>
+            </div>
+          `).join('')
+        : '<p class="text-slate-500">No tasks logged yet for this aligned project.</p>';
+
+      document.getElementById('morningTaskDate').textContent = techDate(tech);
+      document.getElementById('morningAlignedProjectLabel').textContent = tech.project.projectName;
+      document.getElementById('completedDayLabel').textContent = techDate(tech);
+
+      const carryList = tech.carryOverTasks || [];
+      document.getElementById('carryOverBadge').textContent = `${carryList.length} Carry-Over`;
+      document.getElementById('carryOverList').innerHTML = carryList.length
+        ? carryList.map(co => `
+            <div class="bg-slate-900/90 border border-amber-700/50 rounded-xl p-3 space-y-2">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-700/60 px-2 py-0.5 rounded">Origin: ${esc(co.originDate)}</span>
+                    <span class="font-semibold text-sm text-white">${esc(co.title)}</span>
+                  </div>
+                  ${co.note ? `<p class="text-xs text-slate-400 mt-0.5">${esc(co.note)}</p>` : ''}
+                </div>
+                <button type="button" onclick="completeCarryOverTask('${esc(co.id)}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition shrink-0">
+                  <i class="fa-solid fa-check mr-1"></i>Mark Completed
+                </button>
+              </div>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
+                <span class="text-amber-300 font-medium shrink-0"><i class="fa-solid fa-comment-dots mr-1"></i>Pending Reason:</span>
+                <input type="text" value="${esc(co.pendingReason || '')}" onchange="updateCarryOverReason('${esc(co.id)}', this.value)" placeholder="Enter why this task is still pending..." class="field !py-1.5 text-xs" />
+              </div>
+            </div>
+          `).join('')
+        : '<div class="text-xs text-slate-400 bg-slate-900/50 border border-slate-700/50 rounded-xl p-3">No carried-over pending tasks from earlier days.</div>';
+
+      const todayList = tech.todayTasks || [];
+      document.getElementById('todayTasksList').innerHTML = todayList.length
+        ? todayList.map(tsk => `
+            <div class="bg-slate-900/85 border ${tsk.completed ? 'border-emerald-700/60' : 'border-slate-700'} rounded-xl p-3.5 space-y-2.5">
+              <div class="flex items-start justify-between gap-3">
+                <label class="flex items-start gap-3 cursor-pointer flex-1">
+                  <input type="checkbox" ${tsk.completed ? 'checked' : ''} onchange="toggleTodayTaskChecked('${esc(tsk.id)}', this.checked)" class="mt-1 w-4 h-4 rounded accent-emerald-500 cursor-pointer" />
+                  <div>
+                    <span class="text-sm font-semibold ${tsk.completed ? 'line-through text-emerald-400' : 'text-white'}">${esc(tsk.title)}</span>
+                    ${tsk.note ? `<p class="text-xs text-slate-400 mt-0.5">${esc(tsk.note)}</p>` : ''}
+                  </div>
+                </label>
+                <button type="button" onclick="deleteTodayTask('${esc(tsk.id)}')" title="Delete task" class="text-slate-500 hover:text-red-400 text-xs px-2 py-1 cursor-pointer transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+
+              ${!tsk.completed ? `
+                <div class="pl-7 flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
+                  <span class="text-amber-300 font-medium shrink-0"><i class="fa-solid fa-pen-to-square mr-1"></i>Pending Remark (if incomplete at EOD):</span>
+                  <input type="text" value="${esc(tsk.pendingReason || '')}" oninput="updateTodayTaskPendingReason('${esc(tsk.id)}', this.value)" placeholder="Reason why task is not completed (e.g. material/cable/client delay)..." class="field !py-1.5 text-xs" />
+                </div>
+              ` : `
+                <div class="pl-7 text-[11px] text-emerald-400 font-medium">
+                  <i class="fa-solid fa-check-double mr-1"></i>Marked completed for EOD
+                </div>
+              `}
+            </div>
+          `).join('')
+        : '<div class="text-xs text-slate-400 bg-slate-900/60 border border-slate-700/60 rounded-xl p-4 text-center">No tasks added for today yet. Use the Morning Task Entry form above to add tasks.</div>';
+
+      const compList = tech.completedTasks || [];
+      document.getElementById('completedTodayList').innerHTML = compList.length
+        ? compList.map(c => `
+            <div class="bg-slate-900/80 border border-emerald-800/40 rounded-lg p-2.5 flex items-center justify-between gap-2">
+              <div>
+                <p class="font-medium text-emerald-200">${esc(c.title)}</p>
+                ${c.note ? `<p class="text-[11px] text-slate-400">${esc(c.note)}</p>` : ''}
+              </div>
+              <span class="text-[10px] font-mono text-emerald-400 shrink-0">${esc(c.completedDate || techDate(tech))}</span>
+            </div>
+          `).join('')
+        : '<p class="text-slate-500">No completed tasks yet.</p>';
+
+      const histList = tech.eodHistory || [];
+      document.getElementById('eodHistoryList').innerHTML = histList.length
+        ? histList.map(h => `
+            <div class="bg-slate-900/80 border border-slate-700/70 rounded-lg p-2.5 space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-mono font-bold text-cyan-300">${esc(h.date)}</span>
+                <span class="text-[11px] text-slate-400">Done: <b class="text-emerald-400">${h.completedCount}</b> • Moved Pending: <b class="text-amber-400">${h.pendingCount}</b></span>
+              </div>
+              <p class="text-slate-300">${esc(h.note)}</p>
+            </div>
+          `).join('')
+        : '<p class="text-slate-500">No EOD runs recorded yet.</p>';
+    }
+
+    function handleTechProgressUpdate(e) {
+      e.preventDefault();
+      const tech = getActiveTech();
+      if (!tech) return;
+      const val = Math.max(0, Math.min(100, Number(document.getElementById('projTabProgressInput').value) || 0));
+      tech.project.progress = val;
+      cloudReq('PATCH', `technicians/${tech.username}/project`, { progress: val });
+      saveState(true);
+      renderWorkspace();
+    }
+
+    function handleAddDailyTask(e) {
+      e.preventDefault();
+      const tech = getActiveTech();
+      if (!tech) return;
+      const titleInput = document.getElementById('newTaskTitle');
+      const noteInput = document.getElementById('newTaskNote');
+      const title = titleInput.value.trim();
+      const note = noteInput.value.trim();
+      if (!title) return;
+
+      tech.todayTasks = tech.todayTasks || [];
+      tech.todayTasks.push({
+        id: 'tsk-' + Date.now().toString().slice(-6) + '-' + Math.floor(Math.random() * 90 + 10),
+        title,
+        note,
+        completed: false,
+        pendingReason: ''
+      });
+
+      titleInput.value = '';
+      noteInput.value = '';
+      saveState(true);
+      renderWorkspace();
+    }
+
+    function toggleTodayTaskChecked(taskId, checked) {
+      const tech = getActiveTech();
+      if (!tech) return;
+      const tsk = (tech.todayTasks || []).find(x => x.id === taskId);
+      if (!tsk) return;
+      tsk.completed = Boolean(checked);
+      if (tsk.completed) {
+        tsk.pendingReason = '';
+        document.getElementById('eodValidationMsg').classList.add('hidden');
+      }
+      saveState(true);
+      renderWorkspace();
+    }
+
+    function updateTodayTaskPendingReason(taskId, reason) {
+      const tech = getActiveTech();
+      if (!tech) return;
+      const tsk = (tech.todayTasks || []).find(x => x.id === taskId);
+      if (!tsk) return;
+      tsk.pendingReason = reason;
+      if (reason.trim()) {
+        document.getElementById('eodValidationMsg').classList.add('hidden');
+      }
+      saveState(false);
+    }
+
+    function deleteTodayTask(taskId) {
+      const tech = getActiveTech();
+      if (!tech) return;
+      tech.todayTasks = (tech.todayTasks || []).filter(x => x.id !== taskId);
+      saveState(true);
+      renderWorkspace();
+    }
+
+    function updateCarryOverReason(taskId, reason) {
+      const tech = getActiveTech();
+      if (!tech) return;
+      const co = (tech.carryOverTasks || []).find(x => x.id === taskId);
+      if (!co) return;
+      co.pendingReason = reason;
+      saveState(true);
+    }
+
+    function completeCarryOverTask(taskId) {
+      const tech = getActiveTech();
+      if (!tech) return;
+      const idx = (tech.carryOverTasks || []).findIndex(x => x.id === taskId);
+      if (idx === -1) return;
+      const [item] = tech.carryOverTasks.splice(idx, 1);
+      tech.completedTasks = tech.completedTasks || [];
+      tech.completedTasks.unshift({
+        id: item.id,
+        title: item.title,
+        note: item.note ? `${item.note} (was carry-over from ${item.originDate})` : `Carry-over from ${item.originDate}`,
+        completedDate: techDate(tech)
+      });
+      saveState(true);
+      renderWorkspace();
+    }
+
+    function runEodRollover() {
+      const tech = getActiveTech();
+      if (!tech) return;
+
+      const checkedToday = (tech.todayTasks || []).filter(x => x.completed);
+      const uncheckedToday = (tech.todayTasks || []).filter(x => !x.completed);
+      const valMsg = document.getElementById('eodValidationMsg');
+
+      const missingReasonTask = uncheckedToday.find(tsk => !tsk.pendingReason || !tsk.pendingReason.trim());
+      if (missingReasonTask) {
+        valMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1.5"></i>Please enter a <b>Pending Reason / Remark</b> for unchecked task: "<b>${esc(missingReasonTask.title)}</b>" before running EOD.`;
+        valMsg.classList.remove('hidden');
+        showToast('Pending reason is required for all unchecked tasks at EOD.', 'error');
+        return;
+      }
+      valMsg.classList.add('hidden');
+
+      tech.completedTasks = tech.completedTasks || [];
+      checkedToday.forEach(tsk => {
+        tech.completedTasks.unshift({
+          id: tsk.id,
+          title: tsk.title,
+          note: tsk.note || '',
+          completedDate: techDate(tech)
+        });
+      });
+
+      const _plus1 = addDaysIso(techDate(tech), 1);
+      const _today = todayIso();
+      const nextDay = _plus1 > _today ? _plus1 : _today;
+      tech.carryOverTasks = tech.carryOverTasks || [];
+      uncheckedToday.forEach(tsk => {
+        tech.carryOverTasks.push({
+          id: tsk.id,
+          title: tsk.title,
+          note: tsk.note || '',
+          originDate: techDate(tech),
+          pendingReason: tsk.pendingReason.trim()
+        });
+      });
+
+      tech.todayTasks = [];
+      tech.eodHistory = tech.eodHistory || [];
+      tech.eodHistory.unshift({
+        date: techDate(tech),
+        completedCount: checkedToday.length,
+        pendingCount: uncheckedToday.length,
+        note: uncheckedToday.length
+          ? `${checkedToday.length} completed; ${uncheckedToday.length} moved to next day (${nextDay}) with pending remarks.`
+          : `All ${checkedToday.length} today's tasks completed at EOD.`
+      });
+
+      tech.currentDate = nextDay;
+      saveState(true);
+      renderWorkspace();
+    }
+
+    // Same-browser tabs
+    window.addEventListener('storage', e => {
+      if (e.key === STORAGE_KEY) { loadState(); renderWorkspace(); }
+    });
+
+    // Optional query parameter ?tech=tech_vinay to prefill username
+    const params = new URLSearchParams(window.location.search);
+    const prefillTech = params.get('tech');
+
+    loadState();
+    if (prefillTech && !activeTechUsername) {
+      quickFillTech(prefillTech);
+    }
+    renderWorkspace();
+    startCloudPolling();
+  </script>
+</body>
+</html>
